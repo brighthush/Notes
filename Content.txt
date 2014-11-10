@@ -1,0 +1,3 @@
+Contents of Repository
+
+* Note for Deep Learning for Chinese Word Segmentation and POS Tagging

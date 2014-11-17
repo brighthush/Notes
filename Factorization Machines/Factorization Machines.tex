@@ -1,0 +1,48 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{bibentry,natbib}
+
+\title{Paper Reading Note \\ Factorization Machines}
+\author{BrightHush}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\newcommand{\figref}[1]{\figurename~\ref{#1}}
+
+\section{Factorization Machines with libFM}
+
+\subsection{Factorization Machine Model}
+Factorization machines model all nested interactions up to order $d$ between
+the $p$ input variables in $\textbf{x}$ using factorized interaction parameters.
+The factorization machine model of order $d=2$ is defined as
+\begin{align}
+\hat{y}(\textbf{x}) := 
+w_0 + \sum_{j=1}^{p} w_j x_j + \sum_{i=1}^p \sum_{j=i+1}^p x_i x_j \sum_{f=1}^k v_{if} v_{jf}
+\end{align}
+where $k$ is the dimensionality of the factorization and the model parameters 
+$\theta = \{ w_0, w_1, \cdots, w_p, v_{1,1}, \cdots, v_{p,k} \}$ are
+\begin{align}
+v_0 \in R, \textbf{w} \in R^p, \textbf{V} \in R^{p \times k}
+\end{align}
+
+\par
+\textit{Complexity.} Let $N_z$ be the number of nonzero elements in a matrix
+$X$ or vector $\textbf{x}$.
+\begin{align}
+N_z(X) := \sum_{i} \sum_{j} \delta(x_{i,j} \neq 0)
+\end{align}
+
+\par
+The FM model in Equation(1) can be computed in $O(kN_z(\textbf{x}))$ because
+it is equivalent to 
+\begin{align}
+\hat{y}(\textbf{x}) = 
+w_0 + \sum_{j=1}^p w_j x_j + \frac{1}{2} \sum_{f=1}^k 
+\left[ (\sum_{j=1}^p(v_{j,f}x_j))^2 - \sum_{j=1}^p v_{j,f}^2 x_j^2 \right]
+\end{align}
+
+\end{document}

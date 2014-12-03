@@ -25,12 +25,12 @@
  */
 
 #ifndef __STL_CONFIG_H
-# define __STL_CONFIG_H
+#define __STL_CONFIG_H
 
 // Flags:
 // * __STL_NO_BOOL: defined if the compiler doesn't have bool as a builtin
 //   type.
-// * __STL_HAS_WCHAR_T: defined if the compier has wchar_t as a builtin type.
+// * __STL_HAS_WCHAR_T: defined if the compiler has wchar_t as a builtin type.
 // * __STL_NO_DRAND48: defined if the compiler doesn't have the drand48 
 //   function.
 // * __STL_STATIC_TEMPLATE_MEMBER_BUG: defined if the compiler can't handle

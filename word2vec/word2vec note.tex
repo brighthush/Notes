@@ -112,13 +112,15 @@ p(d_j^w|x_w, \theta_{j-1}^w)= \begin{cases}
 \end{cases}
 \end{equation}
 按照 Logistic Regression 中的方式将上面的分段函数写在一起则可以表示为：
-\[ p(d_j^w|x_w, \theta_{j-1}^w) = (\sigma(x_w^T \theta_{j-1}^w))^{1-d_j^w} \cdot (1-\sigma(x_w^T\theta_{j-1}^w))^{d_j^w} \]
+\[ p(d_j^w|x_w, \theta_{j-1}^w) = (\sigma(x_w^T \theta_{j-1}^w))^{1-d_j^w} %
+\cdot (1-\sigma(x_w^T\theta_{j-1}^w))^{d_j^w} \]
 \par
 综合上式和(\ref{cbow-hs})，将其代入到(\ref{cobw-likelihood})中，我们可以得到log似然表示为：
 \begin{align}
 L &= \sum_{w \in C} log \Pi_{j=2}^{l^w}p(d_j^w|x_w, \theta_{j-1}^w)
 \\
-&= \sum_{w \in C} \sum_{j=2}^{l^w} \left( (1-d_j^w)log(\sigma(x_w^T \theta_{j-1}^w)) + d_j^w log(1-\sigma(x_w^T\theta_{j-1}^w)) \right)
+&= \sum_{w \in C} \sum_{j=2}^{l^w} \left( (1-d_j^w)log(\sigma(x_w^T \theta_{j-1}^w)) %
++ d_j^w log(1-\sigma(x_w^T\theta_{j-1}^w)) \right)
 \end{align}
 \par
 为了推导计算梯度方便，我们记上式大圆括号中的内容为

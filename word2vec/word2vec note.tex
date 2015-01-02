@@ -52,7 +52,7 @@ L &= \sum_{w \in C} log(P(Context(w) | w))
 下面的讨论将会将重点放在如何构建这个条件概率上，这也是使用 Hierarchical Softmax 和 Negative Sampling 的
 本质区别所在。
 
-\section{Hierarchical Softmax Method}
+\section{Hierarchical Softmax}
 由于Bengio在06年提出的Neural Network Language Model训练时间主要耗费在输出层的Softmax上，因此
 Hierarchical Softmax 方法，是通过在神经网络的输出层加上一个二叉树来减少 NNLM 在输出层的计算量。下面
 将分别针对 COBW 和 Skip-gram 展开讨论模型的构建细节。
@@ -129,23 +129,111 @@ L(w, j) = (1-d_j^w)log(\sigma(x_w^T \theta_{j-1}^w)) + d_j^w log(1-\sigma(x_w^T\
 \end{align}
 \par
 上式中，我们只有两个参数$(x_w, \theta_{j-1}^w)$，我们将$L(w, j)$对这两个参数进行求偏导，那么我们
-可以得到下面的两个偏导公式：
+可以得到下面的两个梯度计算公式：
 \begin{align}
-\frac{•}{•}
+\frac{\partial L(w, j)}{\partial \theta_{j-1}^w} &= %
+(1 - d_j^w - \sigma(x_w^T \theta_{j-1}^w))x_w
+\\
+\frac{\partial L(w, j)}{\partial x_w} &= %
+(1 - d_j^w - \sigma(x_w^T \theta_{j-1}^w))\theta_{j-1}^w
 \end{align}
+于是$\theta_{j-1}^w$的更新公式可以表示为：
+\[ \theta_{j-1}^w := \theta_{j-1}^w + \eta (1 - d_j^w - \sigma(x_w^T \theta_{j-1}^w))x_w \]
+而对于词对应的词向量应该如何更新呢？我们计算的是$L(w, j)$对$x_w$的偏导，而$x_w$为Context(w)
+中的词向量之和，所以\[ \frac{\partial L(w,j)}{\partial v_u} = %
+\frac{\partial L(w,j)}{\partial x_w} \frac{\partial x_w}{\partial v_u} \quad u \in Context(w)\]
+其中$v_u$表示词$u$对应的词向量，于是词向量对应的更新方式如下：
+\[ v_u := v_u + \eta \sum_{j=2}^{l^w} (1 - d_j^w - \sigma(x_w^T \theta_{j-1}^w))\theta_{j-1}^w %
+\quad u \in Context(w) \]
+其中$v_w$表示词w对应的词向量。
 
 
 \subsection{Skip-gram Architecture}
+对于 Skip-gram 模型，其构建思路是希望在已知w的情况下，预测Context(w)的情况。Skip-gram的结构如图\ref{Fig:skip-hs}。
+\begin{figure}[h!]
+    \centering     
+    \includegraphics[width=1.0\textwidth]{skipgram-hs}   
+    \caption{\label{Fig:skip-hs}Skip-gram with Hierarchical Softmax} 
+\end{figure}
+此时的输入层为词w对应的当个词向量，投影层不做任何操作，只是为了讨论的统一。输出层同CBOW模型一样，是一棵二叉树，
+叶子节点对应每个词，非叶子节点可以理解为二分类器，参数为$\theta$。
+\par
+根据Skip-gram的思想，希望通过当前词预测上下文的思路，并且根据(\ref{skipgram-likelihood})我们可以构建
+条件概率的计算方法为：
+\begin{align}
+p(Context(w)|w) &= \Pi_{u \in Context(w)} p(u|w) 
+\\
+p(u|w) &= \Pi_{j=2}^{l^u} p(d_j^u|v_w, \theta_{j-1}^u)
+\\
+p(d_j^u|v_w, \theta_{j-1}^u) &= \theta(v_w^T \theta_{j-1}^u)^{1-d_j^u} %
+(1-\theta(v_w^T)\theta_{j-1}^u)^{d_j^u}
+\end{align}
 
+\par
+那么对于训练数据集C的log似然可以表示为如下:
+\begin{align}
+L &= log \Pi_{w \in C} \Pi_{u \in Context(w)} \Pi_{j=2}^{l^u} %
+p(d_j^u|v_w, \theta_{j-1}^u)
+\\
+&= \sum_{w \in C} \sum_{u \in Context(w)} \sum_{j=2}^{l^u} %
+log p(d_j^u|v_w, \theta_{j-1}^u)
+\\
+&= \sum_{w \in C} \sum_{u \in Context(w)} \sum_{j=2}^{l^u} %
+(1-d_j^u)log(\theta(v_w^T \theta_{j-1}^u)) + %
+d_j^u log(1 - \theta(v_w^T \theta_{j-1}^u))
+\end{align}
+为了下面描述梯度计算的方便，我们将上式三重求和符号内部的式子表示为
+\[L(w, u, j) = (1-d_j^u)log(\theta(v_w^T \theta_{j-1}^u)) + %
+d_j^u log(1 - \theta(v_w^T \theta_{j-1}^u)) \]
+对上式分别对参数$v_w$和$\theta_{j-1}^u$进行求偏导可得:
+\begin{align}
+\frac{\partial L(w, u, j)}{\partial \theta_{j-1}^u} &= %
+(1 - d_j^u - \theta_{j-1}^u)v_w
+\\
+\frac{\partial L(w, u, j)}{\partial v_w} &= %
+(1 - d_j^u - \theta_{j-1}^u)\theta_{j-1}^u
+\end{align}
+梯度更新的时候就需要注意了，按照随机梯度下降的思路，如果是把一个(w, Context(w))当成是一个
+sample的话。那么$v_w$的梯度上升大小肯定是$\sum_{u \in Context(w)} \sum_{j=2}^{l^u} L(w, u, j)$
+的所有对$v_w$有梯度计算的梯度之和，而对于$\theta_{j-1}^u$，由于Context(w)中包含多个词，那么从根
+到叶子节点的路径上可能重复某个非叶子节点，那么这个时候的$\theta_{j-1}^u$与$\theta_{j'-1}^{u'}$很有
+可能是同一个中间节点，那么对这个节点的$\theta$的梯度就应该是各个单独梯度之和了。上述的两个更新方式，是严格按照
+$\sum_{u \in Context(w)} \sum_{j=2}^{l^u} L(w, u, j)$这个来的，也是随机梯度下降的时候需要注意的。
+
+
+\section{Negative Sampling}
+Negative Sampling 与 Hierarchical Softmax 方法不同之处在于如何构造(\ref{cobw-likelihood})
+和(\ref{skipgram-likelihood})两个条件概率。HS方法通过在网络的输出层构造一棵二叉树，从根节点走到
+对应叶子节点表示一个概率。而在Negative Sampling方法中，每个词有一个$\theta$参数，直接用这个参数估计
+在给定输入情况下，该词出现的概率，这个概率的计算使用Logistc Classification的方法。整个模型构造完成之后，
+目标函数仍然定义为训练语料的Language Model表示的似然，这个Language Model可以是
+CBOW，也可以是Sikp-gram。有了目标函数之后，使用梯度上升法来最大化这个似然，求解的参数是$(\theta, v_w)$。
+\par
+现在问题来了，我们似乎是在训练在某个输入下，某个词出现的概率，其实就是对应该词的一次分类，那么问题来了，我们在给定
+(w, Context(w))或者(Context(w), w)中，我们只有正样本，那么我们如何生成正样本呢？这就是Negative Sampling
+名称的由来。
+\par
+以(w, Context(w))为例，在对应$(w, u)\quad u\in Context(w)$时，我们把u当成$\theta^u$的正样本，然后
+从词典中随机几个非u的词作为负样本，u的负样本集合我们表示为$NEG_u$，于是我们对当前这个(w, u)的似然表示为
+\[ L(w, u) = p(1|v_w, \theta^u) \Pi_{u' \in NEG_u}(1-p(1|v_w, \theta^{u'}))\]，其中
+\[ p(1|v_w, \theta^u) = \sigma(v_w^T\theta^u)\]，也就是Logistic Classification中分为正样本的概率。
+\par
+通过上述对Negative Sampling算法描述，可以知道该算法是非常快速的算法。Hierarchical Softmax算法对于一个样本的计算
+复杂度取决于从根节点到叶子节点路径的长度，而对于Negative Sampling中，仅仅取决于我们希望Sample 多少个负样本，因此
+Negative Sampling是非常快的算法。
+
+\section{Summarize}
+其实Language Model就相当于一个分类问题，一个词代表一个类别，只不过这个类别非常的多。于是最初的Neural Network Language
+Model使用的是Softmax作为神经网络的最后一层，在这个基础上，很多工作都是希望加速这个训练过程。于是出现了
+Hierarchical Softmax 和 Negative Sampling，这两个方法都是基于分类的思想来加速 word vector 训练过程。
+这两个模型本身并不复杂，但是能想到用这种方式来训练word vector就是一个非常大的创新，事实上也得到了不错的效果。
+跳出原有的思维模式，换一种思路来解决问题，在改变问题定义的同时使用某种程度上的近似，从而达到近似求解原问题的目的，
+这样的创新是值得我们学习的。
 
 \section{References}
 \begin{itemize}
-\item[1] Convolutional Neural Networks, \\
-\url{http://andrew.gibiansky.com/blog/machine-learning/convolutional-neural-networks/} .
-\item[2] 数据挖掘系列（10）卷积神经网络算法的一个实现, \\
-\url{http://www.cnblogs.com/fengfenggirl/p/cnn\_ implement.html}.
-\item[3] 受限波兹曼机（RBM）学习笔记, \\
-\url{http://blog.csdn.net/itplus/article/details/19168937}
+\item[1] word2vec 中的数学原理详解, \\
+\url{http://blog.csdn.net/itplus/article/details/37969519}.
 \end{itemize}
 
 \end{document}

@@ -50,3 +50,5 @@ Deep Learning for Chinese Wrod Segmentation and POS Tagging/note[Deep Learning f
 *.log
 *.gz
 *.toc
+word2vec/code/word2vec/text8
+word2vec/code/word2vec/vectors.bin

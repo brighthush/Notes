@@ -1,0 +1,109 @@
+\documentclass{scrartcl}	% classe article di KOMA
+\reversemarginpar
+\newcommand{\MarginDate}[1]{\marginpar{\raggedleft\itshape\small#1}}
+%\usepackage[latin1]{inputenc}	% la codifica di input
+%\usepackage[T1]{fontenc}	% la codifica dei font
+\usepackage{textpos}
+\usepackage{graphicx}
+\usepackage[LabelsAligned]{currvita}	% un buon pacchetto per CV
+\usepackage[nochapters]{classicthesis} % stile ClassicThesis
+\usepackage{url}	% per gli indirizzi Internet
+\renewcommand{\cvheadingfont}{\LARGE\color{Maroon}}
+\renewcommand{\cvlistheadingfont}{\large}
+\renewcommand{\cvlabelfont}{\qquad}
+%Setup hyperref package, and colours for links, text and headings
+\usepackage{hyperref}		
+\hypersetup{colorlinks,breaklinks,
+			urlcolor=Maroon,
+			linkcolor=Maroon}
+\usepackage{eurosym}
+\usepackage{ctex}
+\newlength{\datebox}\settowidth{\datebox}{Summer 2007}
+
+\newcommand{\NewWorkExperience}[3]{\noindent\hangindent=2em\hangafter=0 \parbox{\datebox}{\textit{#1}}\hspace{1.5em} #2 #3%
+\vspace{0.5em}}
+
+\newcommand{\Description}[1]{\hangindent=2em\hangafter=0\noindent\raggedright\footnotesize{#1}\par\normalsize}
+\newcommand{\Sep}{\vspace{2em}}
+\begin{document}
+\thispagestyle{empty}
+\begin{textblock}{1}(-3,0.1) %
+\includegraphics[width=2.8cm]{picture.jpg}
+\end{textblock}
+\begin{cv}{\spacedallcaps{China TeX CV}}
+\vspace{1.5em}
+
+个人联系信息
+\vspace{0.5em}
+
+\NewWorkExperience{}{\textit{Born in China,}}{2002}
+
+\NewWorkExperience{email}{\href{mailto:chinatexer@gmail.com}{chinatexer@gmail.com}}{}
+
+\NewWorkExperience{phone}{+123 456 7890}{}
+\vspace{1.5em}
+
+\noindent\spacedlowsmallcaps{Work Experience}
+\vspace{0.5em}
+
+\NewWorkExperience{现在}{硕士再读,}{某地}
+
+\Description{计算机控制研究工作, \MarginDate{电子科技大学，计算机学院}
+网络系统方案（局域网和广域网）的设计和规划，解答用户的疑问，根 据用户需求提出最佳解决方案；Cisco、IBM网络产品的现场调试和系统维护}
+
+\Sep
+
+\NewWorkExperience{2004--2008}{山东大学,}{济南}
+
+\Description{\MarginDate{数学系} 数学是研究数量、结构、变化以及空间模型等概念的一门学科。透过抽象化和逻辑推理的使用，由计数、计算、量度和对物体形
+状及运动的观察中产生。数学家们拓展这些概念，为了公式化新的猜想以及从合适选定的公理及定义中建立起严谨推导出的真理。}
+
+\Sep
+
+\NewWorkExperience{Summer 2007}{Lehman Brothers,}{London}
+
+\Description{Received pre-placed offer from the Exotics Trading Desk as a \MarginDate{Summer Internship} result of very positive review.
+Rated ``truly distinctive'' for Analytical Skills and Teamwork}
+\vspace{1.5em}
+
+\spacedlowsmallcaps{Education}
+\vspace{0.5em}
+
+\NewWorkExperience{July 2008}{Bocconi University,}{Milan}
+
+\Description{110/110 \textit{summa cum laude}\ \ $\cdotp$\ \  Major: Quantitative Finance\MarginDate{Master of Science in Finance}\newline Thesis: ``Sublinear and Locally Sublinear Prices'' \newline Advisor: Prof.~Erio \textsc{Castagnoli}\ \ $\cdotp$\ \  Gpa: 28.61/30}
+
+\Sep
+
+\NewWorkExperience{July 2006}{Bocconi University,}{Milan}
+
+\Description{110/110 \textit{summa cum laude}\ \ $\cdotp$\ \  Major: Quantitative Finance\MarginDate{Some Other Education}\newline Thesis: ``Sublinear and Locally Sublinear Prices'' \newline Advisor: Prof.~Erio \textsc{Castagnoli}\ \ $\cdotp$\ \  Gpa: 28.61/30}
+\vspace{1.5em}
+
+\spacedlowsmallcaps{Additional Information}
+\vspace{0.5em}
+
+\Description{Sept. 2006	Scholarship for graduate students with an outstanding curriculum (\euro\ 30,000) }
+
+\vspace{1em}
+
+\Description{June 2006	Gmat\textregistered: 730 (q:50;v:39) \MarginDate{Gmat}96\textsuperscript{th} percentile; \newline\textsc{awa}: 6.0/6.0 (89\textsuperscript{th} percentile)}
+
+\vspace{1em}
+\newlength{\langbox}
+\settowidth{\langbox}{English}
+\Description{\parbox{\langbox}{\textsc{English}}\ \ $\cdotp$\ \  \ Fluent}
+
+\vspace{0.5em}
+
+\Description{\parbox{\langbox}{\textsc{French}}\ \ $\cdotp$\ \  \ Fluent}
+\MarginDate{Languages}
+\vspace{0.5em}
+
+\Description{\parbox{\langbox}{\textsc{Italian}}\ \ $\cdotp$\ \ \  Mother Tongue}
+\vspace{1em}
+
+\Description{\LaTeX\ \ $\cdotp$\ \ Typography\ \ $\cdotp$\ \  Programming\ \ $\cdotp$\ \  Other\MarginDate{Interests}}
+\enlargethispage{\baselineskip}
+\end{cv}
+\end{document} 

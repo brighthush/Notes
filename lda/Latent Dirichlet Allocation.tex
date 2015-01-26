@@ -1,0 +1,196 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{bibentry,natbib}
+\usepackage{fancyhdr}
+
+\title{Latent Dirichlet Allocation}
+\author{BrightHush}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\pagestyle{fancy}
+\cfoot{\thepage}
+
+\newcommand{\figref}[1]{\figurename~\ref{#1}}
+%\begin{figure}[h!]
+%    \centering     
+%    \includegraphics[width=0.5\textwidth]{cbow}   
+%    \caption{\label{Fig:CBOW}CBOW Architecture} 
+%\end{figure}
+
+\section{LDA with Gibbs Sampling}
+
+\subsection{Parameters Table}
+\begin{itemize}
+\item[$p(w=t|z=k)$]: a multinomial distribution over terms that corresponding 
+one of the latent topics z=k.
+\item[$p(t|z=k)=\vec{\varphi_k}$]: term distribution for each topic k.
+\item[$p(z|d=m)=\vec{\vartheta_m}$]: topic distribution for each document m.
+\item[$\underline{\phi}=\left( \vec{\varphi_k} \right) _{k=1}^K$]: parameter set.
+\item[$\underline{\theta}=\left( \vec{\vartheta_m}\right)_{m=1}^M$]: parameter set.
+\item[$M$]: number of document to generate (constant scalar).
+\item[$K$]: number of topics (constant scalar).
+\item[$V$]: number of terms $t$ in vocabulary (constant scalar).
+\item[$\vec{\alpha}$]: hyper parameter of Dirichlet distribution which is prior distribution of
+ doc-topic multinomial distribution.
+\item[$\vec{\beta}$]: hyper parameter of Dirichlet distribution which is prior of topic-term 
+multinomial distribution.
+\item[$N_m$]: length of document m.
+\item[$z_{m,n}$]: topic indicator for the nth word in document m.
+\item[$w_{m,n}$]: term indicator for the nth word in document m.
+\end{itemize}
+
+\subsection{Likelihoods}
+对于一篇文档中的一个词，其产生的概率可以表示为(57)(\ref{57})：
+\begin{align}
+\label{57}
+p(w_{m,n}=t|\vec{\vartheta}_m, \underline{\phi}) = \sum_{k=1}^K
+p(w_{m,n}=t|\vec{\varphi}_k) \cdot p(z_{m,n}=k|\vec{\vartheta}_m)
+\end{align}
+对于语料$W=(\vec{w}_m)_{m=1}^M$，每篇文档的生成是独立的，每篇文档中的每个词生成过程也是独立的，
+所以语料的似然可以表示为(58)(\ref{58})：
+\begin{align}
+\label{58}
+L = p(W|\underline{\theta}, \underline{\phi}) = \Pi_{m=1}^M 
+p(\vec{w}_m|\vec{\vartheta}_m, \underline{\phi}) = \Pi_{m=1}^M \Pi_{n=1}^{N_m}
+p(w_{m,n}|\vec{\vartheta}_m, \underline{\phi})
+\end{align}
+
+
+\subsection{Inference via Gibbs Sampling}
+对于包含隐含变量$\vec{z}$，其后验概率$p(\vec{z}|\vec{x})$通常是比较需要的分布，
+对于这样包含隐含变量模型的通用Gibbs sampler的公式可以表示如下(60)(\ref{60})公式所示：
+\begin{align}
+\label{60}
+p(z_i|\vec{z}_{\neg i}, \vec{x}) &= \frac{p(\vec{z}, \vec{x})}{p(\vec{z_{\neg i}}, \vec{x})}
+\\
+&= \frac{p(\vec{z},\vec{x})}{\int_{Z}p(\vec{z}, \vec{x})dz_i}
+\end{align}
+其中分母如果是对离散变量，那么可以改为对离散变量求和。按照Gibbs Sampling的思路，不断根据分量的条件概率进行
+采样，假设我们每次采样得到的样本为$\tilde{\vec{z_r}}, r \in [1, R]$，如果采样次数足够多的话，那么
+隐含变量的后验概率可以表示为(61)(\ref{61})：
+\begin{align}
+\label{61}
+p(\vec{z}|\vec{x}) \approx \frac{1}{R}\sum_{r=1}^R \delta(\vec{z} - \vec{z_r})
+\end{align}
+其中$\delta(\vec{u}) = {1 \ if \ \vec{u}=0;\  0 \  otherwise}$。
+
+\subsection{The collapsed LDA Gibbs Sampler}
+为了设计出LDA的Gibbs Sampler，我们使用上面提到的隐含变量方法，在我们的模型中，隐含变量是$z_{m,n}$，也就是
+语料中词$w_{m,n}$相对应的主题。通过对$z_{m,n}\ and \ w_{m,n}$进行统计，可以得到其他参数的情况。
+\par
+现在我们推断的目标是$p(\vec{z}|\vec{w})$，也就是每个词对应的主题情况，如(62)(\ref{62})所示：
+\begin{align}
+\label{62}
+p(\vec{z}|\vec{w}) = \frac{p(\vec{z},\vec{w})}{p(\vec{w})} 
+= \frac{\Pi_{i=1}^W p(z_i, w_i)}{\Pi_{i=1}^W\sum_{k=1}^Kp(z_i=k,w_i)}
+\end{align}
+由于上式中的分母计算量比较大，那么这个时候Gibbs Sampling派上用场了，为了仿真$p(\vec{z}|\vec{w})$，我们根据
+$p(z_i|\vec{z_{\neg i}}, \vec{w})$进行Markov Chain进行Gibbs Sampling。根据公式(60)(\ref{60})，
+需要知道联合分布概率。
+\par
+\emph{\textbf{Joint Distribution.}} LDA中的联合分布可以分解为(63)(\ref{63})：
+\begin{align}
+\label{63}
+p(\vec{w}, \vec{z} | \vec{\alpha}, \vec{\beta}) &=
+p(\vec{w}|\vec{z},\vec{\beta}) p(\vec{z}|\vec{\alpha})
+\end{align}
+等式(\ref{63})右边第一项可以表示为(64)(\ref{64})：
+\begin{align}
+\label{64}
+p(\vec{w} | \vec{z}, \underline{\phi}) = \Pi_{i=1}^W p(w_i|z_i) 
+= \Pi_{i=1}^W \varphi_{z_i, w_i}
+\end{align}
+上式是表示每个词从独立的多项分布中产生，我们可以将上面的成绩拆成两项，第一项按照主题乘积，第二项按照词汇表
+乘积，于是可以表示为(65)(\ref{65})：
+\begin{align}
+\label{65}
+p(\vec{w} | \vec{z}, \underline{\phi}) = 
+\Pi_{k=1}^K \Pi_{i:\ z_i=k} p(w_i=t|z_i=k) =
+\Pi_{k=1}^K \Pi_{t=1}^V \varphi_{k,t}^{n_k^{(t)}}
+\end{align}
+其中$n_k^{(t)}$表示词t在主题k下出现的次数。\\
+上式表示的是在一组确定的$\phi$参数下词出现的条件概率，我们知道$\phi$中的参数是有Dirichlet先验的，
+因此将上式对$\phi$进行积分或者累加，那么就能求得在超参$\beta$下的词条件概率：
+\begin{align}
+p(\vec{w}|\vec{z}, \vec{\beta}) &= \int 
+p(\vec{w}|\vec{z}, \underline{\phi}) p(\underline{\phi}|\vec{\beta}) d\underline{\phi}
+\\
+&= \Pi_{z=1}^K \frac{\triangle(\vec{n_z}+\vec{\beta})}{\triangle(\vec{\beta})},
+\vec{n_z}=\left( n_z^{(t)} \right)_{t=1}^V
+\end{align}
+\par
+同理按照$p(\vec{w}|\vec{z}, \vec{\beta})$的推导，可以对$p(\vec{z}|\alpha)$进行类似的推导。
+\begin{align}
+p(\vec{z}|\theta) &= \Pi_{i=1}^W p(z_i|d_i)
+\\
+&= \Pi_{m=1}^M\Pi_{k=1}^K p(z_k=1|d_i=m)
+\\
+&= \Pi_{m=1}^M\Pi_{k=1}^K \vartheta_{m,k}^{n_m^{(k)}}
+\end{align}
+其中$d_i$表示词i对应的文档，$n_m^{(k)}$表示在文档m中，topic k出现的次数。上式对$\theta$进行
+积分，可以得到：
+\begin{align}
+p(\vec{z}|\vec{\alpha}) &= \int p(\vec{z}|\underline{\theta}) p(\underline{\theta}|\vec{\alpha}) 
+d\underline{\theta}
+\\
+&= \Pi_{m=1}^M \frac{\triangle(\vec{n_m}+\vec{\alpha})}{\triangle(\vec{\alpha})},
+\vec{n_m}=\left( n_m^{(k)}\right)_{k=1}^K
+\end{align}
+于是可以得到主题和词的联合分部表示为：
+\begin{align}
+p(\vec{w}, \vec{z} | \vec{\alpha}, \vec{\beta}) = 
+\Pi_{z=1}^K \frac{\triangle(\vec{n_z}+\vec{\beta})}{\triangle(\vec{\beta})}
+\Pi_{m=1}^M \frac{\triangle(\vec{n_m}+\vec{\alpha})}{\triangle(\vec{\alpha})}
+\end{align}
+\par
+\textbf{\emph{Full Conditional.}}根据联合概率分布，对于一个词$i=(m,n)$我们可以得到其条件概率，
+也就是Gibbs Sampler采样一个隐含变量的条件概率，如式子(74,78)(\ref{74},\ref{78})：
+\begin{align}
+\label{74}
+p(z_i=k|\vec{z_{\neg i}}, \vec{w}) = \frac{p(\vec{w}, \vec{z})}{p(\vec{w}, \vec{z}_{\neg i})}
+= \frac{p(\vec{w}|\vec{z})}{p(\vec{w}_{\neg i}|\vec{z}_{\neg i})p(w_i)} \cdot 
+\frac{p(\vec{z})}{p(\vec{z}_{\neg i})}
+\\
+\label{78}
+\propto \frac{n_{k,\neg i}^{(t)} + \beta_t}{\sum_{t=1}^V n_{k, \neg i}^{(t)}+\beta_{t}}
+(n_{m, \neg i}^{(k)} + \alpha_{k})
+\end{align}
+\par
+\textbf{\emph{Multinomial Parameters.}}最终，我们需要求解多项分布的参数，这些参数用之前的参数集合$(\theta, \phi)$
+表示。根据这些参数的定义，以及结合Dirichlet先验，根据贝叶斯公式，我们可以得到多项分布参数的后验估计，如
+等式(79,80)(\ref{79},\ref{80})所示：
+\begin{align}
+\label{79}
+p(\vec{\vartheta}_m|\vec{z}_m,\vec{\alpha}) = \frac{1}{Z_{\vartheta _m}} \Pi_{n=1}^{N_m}
+p(z_{m,n}|\vec{\vartheta}_m) \cdot p(\vec{\vartheta}|\vec{\alpha}) = Dir
+(\vec{\vartheta}_m|\vec{n}_m+\vec{\alpha})
+\\
+\label{80}
+p(\vec{\varphi}_k|\vec{z},\vec{w}, \vec{\beta}) = \frac{1}{Z_{\varphi _k}} \Pi_{i:z_i=k}
+p(w_i|\vec{\varphi}_k) \cdot p(\vec{\varphi}_k|\vec{\beta}) = 
+Dir(\vec{\varphi}_k | \vec{n}_k + \vec{\beta})
+\end{align}
+上式中$\vec{n}_m$表示第m篇文档中观察到的topic出现次数，$\vec{n}_k$则相应的表示在topic k中各词对应观察到的次数。
+根据Dirichlet Distribution的期望计算方法$<Dir(\vec{\alpha})> = \frac{a_i}{\sum_i a_i}$，那么根据(79,80)
+(\ref{79}, \ref{80})，可以计算得到下面的结果：
+\begin{align}
+\label{81}
+\varphi_{k,t} = \frac{n_k^{(t)}+\beta_t}{\sum_{t=1}^V n_k^{(t)}+\beta_t}
+\\
+\label{82}
+\vartheta_{m,k} = \frac{n_m^{(k)}+\alpha_k}{\sum_{k=1}^K n_m^{(k)}+\alpha_k}
+\end{align}
+
+
+\section{References}
+\begin{itemize}
+\item[1] Parameter estimation for text anaylysis.\\
+\url{http://www.52nlp.cn/unconstrained-optimization-one}.
+\end{itemize}
+
+\end{document}

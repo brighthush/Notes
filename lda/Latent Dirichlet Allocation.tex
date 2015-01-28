@@ -24,6 +24,46 @@
 
 \section{LDA with Gibbs Sampling}
 
+\subsection{Basic Distribution Knowledge}
+\textbf{Gamma function} 阶乘的扩展，如果n是整数，那么：
+\begin{align}
+\Gamma(n) = (n-1)!
+\end{align}
+gamma function 对负整数和0没有定义之外，对于实部为整数的复数，其定义为一个积分：
+\begin{align}
+\Gamma(t) = \int_{0}^{\infty}x^{t-1}e^{-x}dx
+\end{align}
+\par
+\textbf{Dirichlet dsistribution} 有K($K \geq 2$)个参数，表示为$\alpha = (\alpha_1, \alpha_2, ..., \alpha_K)$，
+其中$\alpha_i > 0$，有K个变量分别表示为($x_1, x_2, ..., x_K$)，其中$x_i \in \left[0, 1 \right]$，
+并且$\sum_{i=1}^K x_i = 1$。
+其概率密度函数可以表示为：
+\begin{align}
+f(x_1, ..., x_K; \alpha) = \frac{1}{B(\alpha)} \Pi_{i=1}^K x_{i}^{\alpha_i - 1}
+\\
+\sum_{i=1}^K x_i = 1
+\\
+B(\alpha) = \frac{\Pi_{k=1}^K \Gamma(\alpha_i)}{\Gamma(\sum_{k=1}^K \alpha_i)}
+\end{align}
+其中各变量的期望和最大值可以表示如下：
+\begin{align}
+E\left[ x_i \right] = \frac{\alpha_i}{\sum_{k=1}^K \alpha_k}
+\\
+x_i = \frac{\alpha_i - 1}{\sum_{k=1}^K \alpha_i - K} \ \ \ Mode
+\end{align}
+Dirichlet 分布的边缘分布是Beta分布，可以表示如下：
+\begin{align}
+x_i \sim Beta(\alpha_i, \sum_{k=1}^K \alpha_k - \alpha_i)
+\end{align}
+Dirichlet分布有一个特殊的情况，就是\textbf{Symmetric Dirichlet Distribution}，所谓对称Dirichlet分布
+就是参数$\alpha$的各个分量相同，也就是各个$\alpha_i$具有相同的值。通常情况下，如果先验知识中并没有关于一个分量
+比另外一个分量更重要的信息，那么 Symmetric Dirichlet Distribution 通常被作为先验分布。
+Symmetric Dirichlet Distribution
+可以表示如下：
+\begin{align}
+f(x_1, \cdots, x_K; \alpha) = \frac{\Gamma(K\alpha)}{\Gamma(\alpha)^K} \Pi_{k=1}^K x_k^{\alpha-1}
+\end{align}
+
 \subsection{Parameters Table}
 \begin{itemize}
 \item[$p(w=t|z=k)$]: a multinomial distribution over terms that corresponding 
@@ -44,7 +84,29 @@ multinomial distribution.
 \item[$w_{m,n}$]: term indicator for the nth word in document m.
 \end{itemize}
 
+\subsection{Mixture modelling}
+LDA是一种混合模型，其使用一组子分布加权来建模观察到的数据，其实也就是使用主题分布作为分量，
+那么每个词的概率可以表示为：
+\begin{align}
+p(t=w) = \sum_{k=1}^K p(t=w|z=k)p(z=k|), \ \sum_{k=1}^K p(z=k) = 1
+\end{align}
+但是LDA中的主题分布并不是全局一样的，而是基于每一篇文档主题分布情况是不同的，于是在LDA中
+有两组目标需要推断（1）主题k下的词分布$p(t|z=k)=\vec{\varphi}_k$和（2）文档m下的
+主题分布$p(z|d=m)=\vec{\vartheta}_m$。
+
+\subsection{Generative model}
+为了获得推断策略，LDA生成模型的过程可以被理解为如下内容：对于每一篇文档，首先生成主题分布
+$\vec{\vartheta}_m$，对于文档中的每个词，根据$\vec{\vartheta}_m$各主题占比分布对每个
+词选择一个主题，用$z_{m,n}$表示，那么根据这个词所在主题的$\vec{\varphi}_{z_{m,n}}$来
+生成这个词。需要注意的是$\vec{\varphi}_k$在整个语料中只会生成一次。
+
 \subsection{Likelihoods}
+对于整个语料集，如果每一个词都被赋予了主题标记$z_{m,n}$，那么一篇文档的似然可以表示为：
+\begin{align}
+L(\vec{w}_m, \vec{z}_m, \vec{\vartheta}_m, \vec{\phi}) = \Pi_{n=1}^{N_m}
+p(w_{m,n}|\vec{\varphi}_{z_{m,n}}) p(z_{m,n}|\vec{\vartheta}_m) p(\vec{\vartheta}_m|\vec{\alpha}) p(\phi|\vec{\beta})
+\end{align}
+\par
 对于一篇文档中的一个词，其产生的概率可以表示为(57)(\ref{57})：
 \begin{align}
 \label{57}

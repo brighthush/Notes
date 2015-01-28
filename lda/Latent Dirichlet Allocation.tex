@@ -45,6 +45,7 @@ f(x_1, ..., x_K; \alpha) = \frac{1}{B(\alpha)} \Pi_{i=1}^K x_{i}^{\alpha_i - 1}
 \\
 B(\alpha) = \frac{\Pi_{k=1}^K \Gamma(\alpha_i)}{\Gamma(\sum_{k=1}^K \alpha_i)}
 \end{align}
+为了和 Parameter estimation for text analysis 一文中的记号表示一致，在下面的笔记中，$B(\alpha)$统一用$\Delta(\alpha)$来表示。
 其中各变量的期望和最大值可以表示如下：
 \begin{align}
 E\left[ x_i \right] = \frac{\alpha_i}{\sum_{k=1}^K \alpha_k}
@@ -167,7 +168,7 @@ p(\vec{w}|\vec{z},\vec{\beta}) p(\vec{z}|\vec{\alpha})
 p(\vec{w} | \vec{z}, \underline{\phi}) = \Pi_{i=1}^W p(w_i|z_i) 
 = \Pi_{i=1}^W \varphi_{z_i, w_i}
 \end{align}
-上式是表示每个词从独立的多项分布中产生，我们可以将上面的成绩拆成两项，第一项按照主题乘积，第二项按照词汇表
+上式是表示每个词从独立的多项分布中产生，我们可以将上面的乘积拆成两项，第一项按照主题乘积，第二项按照词汇表
 乘积，于是可以表示为(65)(\ref{65})：
 \begin{align}
 \label{65}
@@ -228,17 +229,44 @@ p(z_i=k|\vec{z_{\neg i}}, \vec{w}) = \frac{p(\vec{w}, \vec{z})}{p(\vec{w}, \vec{
 等式(79,80)(\ref{79},\ref{80})所示：
 \begin{align}
 \label{79}
-p(\vec{\vartheta}_m|\vec{z}_m,\vec{\alpha}) = \frac{1}{Z_{\vartheta _m}} \Pi_{n=1}^{N_m}
-p(z_{m,n}|\vec{\vartheta}_m) \cdot p(\vec{\vartheta}|\vec{\alpha}) = Dir
-(\vec{\vartheta}_m|\vec{n}_m+\vec{\alpha})
+p(\vec{\vartheta}_m|\vec{z}_m,\vec{\alpha}) &=
+\frac{p(\vec{z}_m|\vec{\vartheta}_m)p(\vec{\vartheta}_m|\vec{\alpha})}{p(\vec{z}_m|\vec{\alpha})}
+\\
+&= \frac{p(\vec{z}_m|\vec{\vartheta}_m)p(\vec{\vartheta}_m|\vec{\alpha})}
+{\int p(\vec{z}_m|\vec{\vartheta}_m)p(\vec{\vartheta}_m|\vec{\alpha}) d\vec{\vartheta}_m}
+\\
+&= \frac{\Pi_{k=1}^K \vartheta_{m,k}^{n_m^{(k)}} \frac{1}
+{\Delta(\vec{\alpha})} \Pi_{k=1}^K \vartheta_{m,k}^{\alpha_k - 1} }
+{\frac{\Delta(\vec{n}_m + \vec{\alpha})}{\Delta(\vec{\alpha})}}
+\\
+&= \frac{\Pi_{k=1}^K \vartheta_{m,k}^{n_m^{(k)} + \alpha_k - 1}}{\Delta(\vec{n}_m + \vec{\alpha})}
+\\
+&= \frac{1}{Z_{\vartheta _m}} \Pi_{n=1}^{N_m}
+p(z_{m,n}|\vec{\vartheta}_m) \cdot p(\vec{\vartheta}|\vec{\alpha}) 
+\\
+&= Dir(\vec{\vartheta}_m|\vec{n}_m+\vec{\alpha})
 \\
 \label{80}
-p(\vec{\varphi}_k|\vec{z},\vec{w}, \vec{\beta}) = \frac{1}{Z_{\varphi _k}} \Pi_{i:z_i=k}
-p(w_i|\vec{\varphi}_k) \cdot p(\vec{\varphi}_k|\vec{\beta}) = 
-Dir(\vec{\varphi}_k | \vec{n}_k + \vec{\beta})
+p(\vec{\varphi}_k|\vec{z},\vec{w}, \vec{\beta}) &= \frac{1}{Z_{\varphi_k}} \Pi_{i:z_i=k}
+p(w_i|\vec{\varphi}_k) \cdot p(\vec{\varphi}_k|\vec{\beta}) 
+\\
+&= Dir(\vec{\varphi}_k | \vec{n}_k + \vec{\beta})
 \end{align}
-上式中$\vec{n}_m$表示第m篇文档中观察到的topic出现次数，$\vec{n}_k$则相应的表示在topic k中各词对应观察到的次数。
-根据Dirichlet Distribution的期望计算方法$<Dir(\vec{\alpha})> = \frac{a_i}{\sum_i a_i}$，那么根据(79,80)
+上式中$\vec{n}_m$表示第m篇文档中观察到的topic出现次数，$\vec{n}_k$则相应的表示在topic k中各词对应观察到的次数。\\
+和(\ref{79})中的推导相似，(\ref{80})中表示的是主题下词的分布，由于$\varphi_k$是全局的，那么需要统计所有的词中，
+主题被标记为k的词分布情况，就能得到该主题下词的分布了，如果用$w_k$表示主题k下各词出现情况，于是(\ref{80})的详细推导可以如下计算：
+\begin{align}
+p(\vec{\varphi}_k|\vec{w}_k, \vec{\beta}) &= 
+\frac{p(\vec{w}_k|\vec{\varphi}_k)p(\vec{\varphi}_k|\vec{\beta})}{p(\vec{w}_k|\vec{\beta})}
+\\ &=
+\frac{\Pi_{t=1}^V \varphi_{k,t}^{n_k^{(t)}} \frac{1}{\Delta(\vec{\beta})} \Pi_{t=1}^V \varphi_{k,t}^{\beta_t -1}}
+{\frac{\Delta(\vec{n}_k + \vec{\beta})}{\Delta(\vec{\beta})}}
+\\
+&= \frac{\Pi_{t=1}^V \varphi_{k,t}^{n_k^{(t)} + \beta_t -1}}{\Delta(\vec{n}_k+\vec{\beta})}
+\\
+&= Dir(\vec{\varphi}_k|\vec{n}_k+\vec{\beta})
+\end{align}
+根据Dirichlet Distribution的期望计算方法$<Dir(\vec{\alpha})> = \frac{\alpha_i}{\sum_i \alpha_i}$，那么根据(79,80)
 (\ref{79}, \ref{80})，可以计算得到下面的结果：
 \begin{align}
 \label{81}

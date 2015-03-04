@@ -1,6 +1,6 @@
 
 ### The basic operations  
-* 删除文件或者目录
+* 删除文件或者目录  
 > git rm demo.h  
 > git rm -r direc/direc/  
 * 重命名文件,使用git mv,和mv命令用法一样  
